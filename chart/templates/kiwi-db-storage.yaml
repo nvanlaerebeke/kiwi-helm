@@ -1,0 +1,17 @@
+{{- if .Values.postgresql.primary.persistence.enabled }}
+{{- if .Values.postgresql.primary.persistence.create -}}
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: {{ .Values.postgresql.primary.persistence.existingClaim }}
+  annotations:
+    "helm.sh/resource-policy": "keep"
+spec:
+  storageClassName: {{ .Values.persistence.storage.class }}
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.persistence.storage.db.size }}
+{{- end }}
+{{- end }}

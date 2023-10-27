@@ -1,0 +1,4 @@
+.vscode
+build
+chart/charts
+chart/requirements.lock

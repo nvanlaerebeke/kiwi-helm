@@ -1,0 +1,158 @@
+{{-  $db_host := printf "%s-%s" .Release.Name "postgresql" -}}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  labels:
+    app: {{ .Values.name }}
+  name:  {{ .Values.name }}
+spec:
+  replicas:  {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app:  {{ .Values.name }}
+  template:
+    metadata:
+      labels:
+        app:  {{ .Values.name }}
+    spec:
+      volumes:
+{{- if .Values.persistence.enabled }}
+      - name: media
+        persistentVolumeClaim:
+{{- if .Values.persistence.existingClaim }}
+          claimName: {{ .Values.persistence.existingClaim }}
+{{- else }}
+          claimName: {{ .Values.name }}-storage-claim
+{{- end }}
+{{- end }}
+{{- if .Values.ingress.enabled }}
+      - name: tls-secret
+        secret:
+          secretName: {{ .Values.ingress.secretName }}
+      - name: nginx-config
+        configMap:
+          name: {{ .Values.name }}-nginx-config
+{{- else }}
+{{- if .Values.service.secretName }}
+      - name: tls-secret
+        secret:
+          secretName: {{ .Values.service.secretName }}
+{{- end }}
+{{- end }}
+      initContainers:
+      - name: migrations
+{{- if .Values.image.registry }}          
+        image: "{{ .Values.image.registry }}/{{ .Values.image.image }}:{{ .Values.image.tag }}"
+{{- else }}
+        image: "{{ .Values.image.image }}:{{ .Values.image.tag }}"
+{{- end }}
+        imagePullPolicy: {{ .Values.image.imagePullPolicy }}
+        command: ["/Kiwi/manage.py", "migrate"]
+        env:
+        - name: SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: "{{ .Values.name }}-secret"
+              key: secret_key
+        - name: KIWI_DB_ENGINE
+          value: "django.db.backends.postgresql"
+        - name: KIWI_DB_USER
+          value: {{ .Values.database.db_user }}
+        - name: KIWI_DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.postgresql.auth.existingSecret }}
+              key: password
+        - name: KIWI_DB_HOST
+{{- if .Values.database.db_host }}
+          value: {{ .Values.database.db_host }}
+{{- else }}
+          value: {{ $db_host }}
+{{- end }}
+        - name: KIWI_DB_PORT
+          value: {{ .Values.database.db_port | quote }}
+        - name: KIWI_DB_NAME
+          value: {{ .Values.database.db_name }}
+      containers:
+      - name:  {{ .Values.name }}
+{{- if .Values.image.registry }}
+        image: "{{ .Values.image.registry }}/{{ .Values.image.image }}:{{ .Values.image.tag }}"
+{{- else }}
+        image: "{{ .Values.image.image }}:{{ .Values.image.tag }}"
+{{- end }}
+        imagePullPolicy: {{ .Values.image.imagePullPolicy }}
+        volumeMounts:
+{{- if .Values.persistence.enabled }}
+        - mountPath: /Kiwi/uploads
+          name: media
+{{- end }}
+{{- if .Values.ingress.enabled }}
+        - name: nginx-config
+          mountPath: /Kiwi/etc/nginx.conf
+          subPath: nginx.conf
+        - name: tls-secret
+          readOnly: true
+          mountPath: /Kiwi/ssl/localhost.crt
+          subPath: tls.crt
+        - name: tls-secret
+          readOnly: true
+          mountPath: /Kiwi/ssl/localhost.key
+          subPath: tls.key
+{{- else }}
+{{- if .Values.service.secretName }}
+        - name: tls-secret
+          readOnly: true
+          mountPath: /Kiwi/ssl/localhost.crt
+          subPath: tls.crt
+        - name: tls-secret
+          readOnly: true
+          mountPath: /Kiwi/ssl/localhost.key
+          subPath: tls.key
+{{- end }}
+{{- end }}
+        env:
+        - name: SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: "{{ .Values.name }}-secret"
+              key: secret_key
+        - name: KIWI_DB_ENGINE
+          value: "django.db.backends.postgresql"
+        - name: KIWI_DB_USER
+          value: {{ .Values.database.db_user }}
+        - name: KIWI_DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.postgresql.auth.existingSecret }}
+              key: password
+        - name: KIWI_DB_HOST
+{{- if .Values.database.db_host }}
+          value: {{ .Values.database.db_host }}
+{{- else }}
+          value: {{ $db_host }}
+{{- end }}
+        - name: KIWI_DB_PORT
+          value: {{ .Values.database.db_port | quote }}
+        - name: KIWI_DB_NAME
+          value: {{ .Values.database.db_name }}
+        ports:
+        - name: http
+          containerPort: 8080
+        - name: https
+          containerPort: 8443
+        livenessProbe:
+          httpGet:
+            path: /accounts/login/
+            port: https
+            scheme: HTTPS
+        readinessProbe:
+          httpGet:
+            path: /accounts/login/
+            port: https
+            scheme: HTTPS
+        resources:
+          {{- toYaml .Values.resources | nindent 12 }}
+{{- if .Values.image.existingRegistrySecret }}          
+      imagePullSecrets:
+        - name: {{ .Values.image.existingRegistrySecret }}
+{{- end }}

@@ -1,0 +1,179 @@
+#
+# Application name
+#
+name: kiwi
+
+#
+# Application image
+#
+image:
+  registry: ""
+  image: "kiwitcms/kiwi"
+  tag: "latest"
+  imagePullPolicy: "IfNotPresent"
+  existingRegistrySecret: ""
+
+#
+# Service configuration
+#
+service:
+  #
+  # TLS secret to use when not using ingress
+  # 
+  # Note: when ingress is enabled the ingress.secretName is used instead
+  #
+  secretName: ""
+
+  #
+  # Service type to use, ClusterIP/NodePort/LoadBalancer
+  #
+  type: ClusterIP
+  port:
+    #
+    # Default port to use for the http service
+    #
+    http: 80
+    
+    #
+    # Default port to use for the https service
+    #
+    https: 443
+
+#
+# Ingress configuration
+#
+ingress:
+  #
+  # Enable the ingress controller
+  #
+  enabled: false
+
+  #
+  # The kiwi tcms hostname
+  #
+  host: ""
+
+  #
+  # The name of the secret that has the tls certificate
+  #
+  secretName: ""
+
+#
+# Resource Limitations
+#
+replicaCount: 1
+resources:
+  limits:
+    cpu: 300m
+    memory: 512Mi
+  requests:
+    cpu: 200m
+    memory: 256Mi
+#
+# Data store for uploads (note, this does not include the database)
+#
+persistence:
+  #
+  # For testing persistence can be turned off
+  #
+  enabled: false
+
+  #
+  # Recommended way of using the chart, create your own volume claim to fit your needs
+  #
+  existingClaim: ""
+
+  #
+  # Use a storage class to have persistence
+  # Note this will only be used if existingClaim is not filled in and persistence is enabled
+  #
+  storage:
+    class: default
+    db:
+      size: 5G
+    uploads: 
+      size: 5G
+
+#
+# Database settings
+#
+database:
+  #
+  # Hostname the database is reachable on
+  #  by default this is <release name>-postgres
+  #
+  db_host: ""
+
+  #
+  # Port the postgres server is reachable on
+  #
+  db_port: 5432
+
+  #
+  # Database name to use
+  #
+  db_name: kiwi
+
+  #
+  # Database user to use
+  #  When changing this, also update postgresql.auth.username
+  #
+  db_user: kiwi
+
+## PostgreSQL configuration
+## This will deploy a PostgreSQL instance with the kiwi containers
+##
+## Documentation: https://github.com/bitnami/charts/tree/master/bitnami/postgresql
+##
+postgresql:
+  enabled: true
+  auth:
+    #
+    # Create a random password/secret when set to true 
+    #
+    create: true
+    
+    #
+    # Secret must contain at least the following key:
+    # 
+    #  - postgres-password: password for the postgres user
+    #  - password: password to use for the postgresql.auth.username/database.db_user
+    #
+    # More configuration options are avialable, see bitnami documentation for more info
+    #
+    # When providing your own secret make sure to set postgresql.auth.create to false
+    #
+    existingSecret: "kiwi-postgres-password"
+
+    #
+    # Username of the custom database user
+    #  When changing this, also update database.db_user 
+    #
+    username: kiwi
+
+    #
+    # Custom database to create
+    #  When changing this, also update database.db_name
+    database: kiwi
+  primary:
+    service:
+      #
+      # Can be values like ClusterIP/NodePort or LoadBalancer
+      #
+      type: ClusterIP
+      nodePorts: 
+        postgresql: 30000
+      loadBalancerIP: ""
+    persistence:
+      enabled: false
+      #
+      # When create is enabled, the volume claim will be created with the persistence.storage details
+      #
+      create: false
+
+      #
+      # When providing your own volume claim make sure to set create to false
+      #
+      existingClaim: kiwi-db-claim
+  volumePermissions:
+    enabled: true
