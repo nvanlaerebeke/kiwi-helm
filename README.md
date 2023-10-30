@@ -264,7 +264,7 @@ kiwitcms:
     secretName: secret-tls
   persistence:
     enabled: true
-    existingClaim: kiwi-storage-claim
+    existingClaim: kiwi-uploads-claim
   postgresql:
     auth:
       create: false
@@ -272,7 +272,7 @@ kiwitcms:
     primary:
       persistence:
         enabled: true
-        existingClaim: kiwi-db-storage
+        existingClaim: kiwi-db-claim
 ```
 
 the `./templates/*.yaml`:
@@ -312,9 +312,9 @@ spec:
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: kiwi-storage
+  name: kiwi-uploads
   labels:
-    app: kiwi-storage
+    app: kiwi-uploads
 spec:
   storageClassName: standard
   capacity:
@@ -327,14 +327,14 @@ spec:
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: kiwi-storage-claim
+  name: kiwi-uploads-claim
 spec:
   storageClassName: standard
   accessModes:
     - ReadWriteOnce
   selector:
     matchLabels:
-      app: kiwi-storage
+      app: kiwi-uploads
   resources:
     requests:
       storage: 5Gi
