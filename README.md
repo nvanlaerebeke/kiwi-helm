@@ -265,7 +265,7 @@ kiwitcms:
   persistence:
     enabled: true
     existingClaim: kiwi-storage-claim
-  postgres:
+  postgresql:
     auth:
       create: false
       existingSecret: kiwi-postgres-password
