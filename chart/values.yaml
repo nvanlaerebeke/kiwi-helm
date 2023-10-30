@@ -141,7 +141,7 @@ postgresql:
     #
     # More configuration options are avialable, see bitnami documentation for more info
     #
-    # When providing your own secret make sure to set postgresql.auth.create to false
+    # When providing your own secret make sure to set postgresql.auth.create to false to prevent conflicts
     #
     existingSecret: "kiwi-postgres-password"
 
@@ -168,6 +168,7 @@ postgresql:
       enabled: false
       #
       # When create is enabled, the volume claim will be created with the persistence.storage details
+      #  So do not provide your own
       #
       create: false
 
