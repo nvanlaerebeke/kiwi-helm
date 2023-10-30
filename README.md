@@ -246,3 +246,117 @@ This is due to issues I was having getting the `ingress` to work with a `https` 
 It had to work with both `nginx` and `traefik` ingress controllers and it didn't so this was the quick fix for it.  
 
 Any pull requests to fix this are welcome!
+
+## Umbrella helm chart example
+
+A quick example on how to create an umbrella chart using this chart:
+
+The Chart.yaml:
+
+```yaml
+apiVersion: v1
+name: kiwi
+version: 0.0.1
+appVersion: 0.0.1
+description: Kiwi TCMS
+dependencies:
+  - name: kiwitcms
+    version: "0.0.1"
+    repository: "oci://registry-1.docker.io/crazytje"
+```
+
+The values yaml:
+
+```yaml
+kiwitcms:
+  ingress:
+    enabled: true
+    host: kiwi.example.com
+    secretName: secret-tls
+  persistence:
+    enabled: true
+    existingClaim: kiwi-storage-claim
+  postgres:
+    auth:
+      create: false
+      existingSecret: kiwi-postgres-password
+    primary:
+      persistence:
+        enabled: true
+        existingClaim: kiwi-db-storage
+```
+
+the `./templates/*.yaml`:
+
+```yaml
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: kiwi-db
+  labels:
+    app: kiwi-db
+spec:
+  storageClassName: standard
+  capacity:
+    storage: 5Gi
+  accessModes:
+  - ReadWriteOnce
+  hostPath:
+    path: "/data/kiwi/db"
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: kiwi-db-claim
+spec:
+  storageClassName: standard
+  accessModes:
+    - ReadWriteOnce
+  selector:
+    matchLabels:
+      app: kiwi-db
+  resources:
+    requests:
+      storage: 5Gi
+  volumeMode: Filesystem
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: kiwi-storage
+  labels:
+    app: kiwi-storage
+spec:
+  storageClassName: standard
+  capacity:
+    storage: 5Gi
+  accessModes:
+  - ReadWriteOnce
+  hostPath:
+    path: "/data/kiwi/uploads"
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: kiwi-storage-claim
+spec:
+  storageClassName: standard
+  accessModes:
+    - ReadWriteOnce
+  selector:
+    matchLabels:
+      app: kiwi-storage
+  resources:
+    requests:
+      storage: 5Gi
+  volumeMode: Filesystem
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: kiwi-postgres-password
+data:
+  postgres-password: cGFzc3dvcmQ=
+  password: cGFzc3dvcmQ=
+type: Opaque
+```
