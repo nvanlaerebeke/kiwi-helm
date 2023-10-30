@@ -44,7 +44,8 @@ kubectl port-forward <pod> 30000:8080
 ```
 
 Go to `http://localhost:30000` to verify the deployment worked.  
-This will be with a self-signed certificate for testing purposes.
+This will be with a self-signed certificate for testing purposes.  
+Note that the port forward is done on the `http` port, this is to verify the `http` to `https` redirect works.
 
 ## Persistence with existingVolumeClaim
 
