@@ -30,8 +30,6 @@ make push
 
 The chart deploys `Kiwi TCMS` with `Postgres` (default).  
 
-It expects two things to be present:
-
 A minimal deployment would look like:
 
 ```console
