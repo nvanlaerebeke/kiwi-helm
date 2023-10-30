@@ -234,17 +234,7 @@ helm upgrade --install kiwitcms \
     registry-1.docker.io/crazytje/kiwitcms:<version>
 ```
 
-```console
-kubectl port-forward <pod> 443:8443
-```
-
-## Custom Nginx configuration
-
-A custom `nginx` config is mounted when `ingress` is enabled.  
-This is due to issues I was having getting the `ingress` to work with a `https` backend.  
-It had to work with both `nginx` and `traefik` ingress controllers and it didn't so this was the quick fix for it.  
-
-Any pull requests to fix this are welcome!
+Both the `http` and `https` endpoints will now be exposed on ports `30010` and `30011`.  
 
 ## Umbrella helm chart example
 
@@ -359,3 +349,11 @@ data:
   password: cGFzc3dvcmQ=
 type: Opaque
 ```
+
+## Custom Nginx configuration
+
+A custom `nginx` config is mounted when `ingress` is enabled.  
+This is due to issues I was having getting the `ingress` to work with a `https` backend.  
+It had to work with both `nginx` and `traefik` ingress controllers and it didn't, so this was the quick fix for it.  
+
+Any pull requests to fix this are welcome!
