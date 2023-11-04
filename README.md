@@ -1,6 +1,6 @@
 # kiwi-helm
 
-Helm chart for `Kiwi TCMS`
+Helm chart for [Kiwi TCMS](https://github.com/kiwitcms/Kiwi)
 
 ## Packaging
 
